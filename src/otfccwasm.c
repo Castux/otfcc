@@ -1,5 +1,11 @@
 #include "otfccwasm.h"
 
+#ifdef EMSCRIPTEN
+#include "emscripten.h"
+#else
+#define EMSCRIPTEN_KEEPALIVE
+#endif
+
 uint8_t parse_8u(uint8_t **buffer) {
 	uint8_t value = read_8u(*buffer);
 	*buffer += 1;
@@ -100,7 +106,7 @@ otfcc_SplineFontContainer *readSFNTfromBuffer(uint8_t *buffer) {
 
 // This is a rewrite of otfccdump.c main()
 
-void fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut) {
+void EMSCRIPTEN_KEEPALIVE fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut) {
 	uint32_t ttcindex = 0;
 
 	bool show_pretty = true;
@@ -191,7 +197,7 @@ void fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut
 	otfcc_deleteOptions(options);
 }
 
-void JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOut) {
+void EMSCRIPTEN_KEEPALIVE JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOut) {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "wasm");
