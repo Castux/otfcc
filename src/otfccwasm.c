@@ -246,17 +246,6 @@ struct blob* EMSCRIPTEN_KEEPALIVE JSONtoFont(uint8_t *dataIn, size_t lenIn) {
 	return result;
 }
 
-struct blob* EMSCRIPTEN_KEEPALIVE test(size_t len)
-{
-	struct blob *res = malloc(sizeof(struct blob));
-	res->data = malloc(len);
-	res->length = len;
-	for(size_t i = 0; i < len; i++)
-		res->data[i] = 0x69;
-
-	return res;
-}
-
 uint8_t* EMSCRIPTEN_KEEPALIVE blob_data(struct blob *blob)
 {
 	return blob->data;

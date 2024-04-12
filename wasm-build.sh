@@ -2,6 +2,6 @@
 
 SRC=`find dep lib -name '*.c' -not -path "*msvc*"`
 INCLUDE="-Iinclude -Ilib -Ideps -Iinclude/dep"
-OPTS="-O3 -sALLOW_MEMORY_GROWTH"
+OPTS="-g -sMODULARIZE -sALLOW_MEMORY_GROWTH -sEXPORTED_FUNCTIONS=['_malloc','_free']"
 
-emcc $INCLUDE src/otfccwasm.c $SRC $OPTS -o otfccwasm.js
+emcc $INCLUDE src/otfccwasm.c $SRC $OPTS -o wasm-poc/otfccwasm.js
