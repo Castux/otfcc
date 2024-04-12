@@ -34,29 +34,25 @@ void readEntireFile(char *inPath, uint8_t **_buffer, size_t *_length) {
 	*_length = length;
 }
 
-uint8_t parse_8u(uint8_t **buffer)
-{
+uint8_t parse_8u(uint8_t **buffer) {
 	uint8_t value = read_8u(*buffer);
 	*buffer += 1;
 	return value;
 }
 
-uint16_t parse_16u(uint8_t **buffer)
-{
+uint16_t parse_16u(uint8_t **buffer) {
 	uint16_t value = read_16u(*buffer);
 	*buffer += 2;
 	return value;
 }
 
-uint32_t parse_32u(uint8_t **buffer)
-{
+uint32_t parse_32u(uint8_t **buffer) {
 	uint32_t value = read_32u(*buffer);
 	*buffer += 4;
 	return value;
 }
 
-void readPacketsFromBuffer(otfcc_SplineFontContainer *font, uint8_t *buffer)
-{
+void readPacketsFromBuffer(otfcc_SplineFontContainer *font, uint8_t *buffer) {
 	uint8_t *head;
 
 	for (uint32_t count = 0; count < font->count; count++) {
@@ -138,8 +134,7 @@ otfcc_SplineFontContainer *readSFNTfromBuffer(uint8_t *buffer) {
 
 // This is a rewrite of otfccdump.c main()
 
-void fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut)
-{
+void fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut) {
 	uint32_t ttcindex = 0;
 
 	bool show_pretty = true;
@@ -230,8 +225,7 @@ void fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut
 	otfcc_deleteOptions(options);
 }
 
-void JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOut)
-{
+void JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOut) {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "wasm");
@@ -273,10 +267,9 @@ void JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOu
 	otfcc_deleteOptions(options);
 }
 
-int main(int argc, char *argv[])
-{
-	if(argc < 3)
-	{
+int main(int argc, char *argv[]) {
+
+	if(argc < 3) {
 		fprintf(stderr, "Usage: wasm <input.[otf|ttf|otc]> <output.json>\n");
 		exit(EXIT_FAILURE);
 	}
@@ -299,16 +292,12 @@ int main(int argc, char *argv[])
 	JSONtoFont(dataIn, lenIn, &dataOut, &lenOut);
 
 	FILE *outFile = fopen(outPath, "wb");
-	if(!outFile)
-	{
+	if(!outFile) {
 		fprintf(stderr, "Cannot write to file \"%s\". Exit.\n", outPath);
 		exit(EXIT_FAILURE);
 	}
 	fwrite(dataOut, sizeof(uint8_t), lenOut, outFile);
 	fclose(outFile);
-
-
-//	JSONtoFont(argv[1], argv[2]);
 
 	free(dataIn);
 	free(dataOut);
