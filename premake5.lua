@@ -149,7 +149,8 @@ project "otfccdump"
 	removefiles {
 		"src/otfccbuild.c",
 		"src/otfccdll.c",
-		"src/wasm.c",
+		"src/otfccwasm.c",
+		"src/otfccwasm-test.c",
 	}
 
 project "otfccbuild"
@@ -167,7 +168,8 @@ project "otfccbuild"
 	removefiles {
 		"src/otfccdump.c",
 		"src/otfccdll.c",
-		"src/wasm.c",
+		"src/otfccwasm.c",
+		"src/otfccwasm-test.c",
 	}
 
 project "otfccdll"
@@ -185,7 +187,8 @@ project "otfccdll"
 	removefiles {
 		"src/otfccdump.c",
 		"src/otfccbuild.c",
-		"src/wasm.c",
+		"src/otfccwasm.c",
+		"src/otfccwasm-test.c",
 	}
 
 project "wasm"
