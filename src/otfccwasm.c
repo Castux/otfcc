@@ -106,7 +106,7 @@ otfcc_SplineFontContainer *readSFNTfromBuffer(uint8_t *buffer) {
 
 // This is a rewrite of otfccdump.c main()
 
-void EMSCRIPTEN_KEEPALIVE fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut) {
+struct blob* EMSCRIPTEN_KEEPALIVE fontToJSON(uint8_t *dataIn, size_t lenIn) {
 	uint32_t ttcindex = 0;
 
 	bool show_pretty = true;
@@ -185,8 +185,9 @@ void EMSCRIPTEN_KEEPALIVE fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **da
 		buflen++;
 	}
 
-	*dataOut = (uint8_t *) buf;
-	*lenOut = buflen;
+	struct blob *result = malloc(sizeof(struct blob));
+	result->data = (uint8_t *)buf;
+	result->length = buflen;
 
 	// Clean up
 
@@ -195,9 +196,11 @@ void EMSCRIPTEN_KEEPALIVE fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **da
 		if (root) json_builder_free(root);
 	}
 	otfcc_deleteOptions(options);
+
+	return result;
 }
 
-void EMSCRIPTEN_KEEPALIVE JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOut) {
+struct blob* EMSCRIPTEN_KEEPALIVE JSONtoFont(uint8_t *dataIn, size_t lenIn) {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "wasm");
@@ -226,15 +229,46 @@ void EMSCRIPTEN_KEEPALIVE JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **d
 	loggedStep("Consolidate") {
 		otfcc_iFont.consolidate(font, options);
 	}
+
+	struct blob *result = malloc(sizeof(struct blob));
 	loggedStep("Build") {
 		otfcc_IFontSerializer *writer = otfcc_newOTFWriter();
 		caryll_Buffer *otf = (caryll_Buffer *)writer->serialize(font, options);
 
-		*lenOut = buflen(otf);
-		*dataOut = malloc(*lenOut);
-		memcpy(*dataOut, otf->data, *lenOut);
+		result->length = buflen(otf);
+		result->data = malloc(result->length);
+		memcpy(result->data, otf->data, result->length);
 
 		buffree(otf), writer->free(writer), otfcc_iFont.free(font);
 	}
 	otfcc_deleteOptions(options);
+
+	return result;
+}
+
+struct blob* EMSCRIPTEN_KEEPALIVE test(size_t len)
+{
+	struct blob *res = malloc(sizeof(struct blob));
+	res->data = malloc(len);
+	res->length = len;
+	for(size_t i = 0; i < len; i++)
+		res->data[i] = 0x69;
+
+	return res;
+}
+
+uint8_t* EMSCRIPTEN_KEEPALIVE blob_data(struct blob *blob)
+{
+	return blob->data;
+}
+
+size_t EMSCRIPTEN_KEEPALIVE blob_length(struct blob *blob)
+{
+	return blob->length;
+}
+
+void EMSCRIPTEN_KEEPALIVE free_blob(struct blob *blob)
+{
+	free(blob->data);
+	free(blob);
 }

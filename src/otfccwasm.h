@@ -12,7 +12,14 @@
 #include "platform.h"
 #include "stopwatch.h"
 
-void fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut);
-void JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOut);
+struct blob
+{
+	uint8_t *data;
+	size_t length;
+};
+
+struct blob* fontToJSON(uint8_t *dataIn, size_t lenIn);
+struct blob* JSONtoFont(uint8_t *dataIn, size_t lenIn);
+void free_blob(struct blob *blob);
 
 #endif // OTFCC_WASM_H

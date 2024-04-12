@@ -42,22 +42,19 @@ int main(int argc, char *argv[]) {
 	readEntireFile(inPath, &dataIn, &lenIn);
 	printf("Read %s: (%ld bytes)\n", inPath, lenIn);
 
-	uint8_t *dataOut = NULL;
-	size_t lenOut = 0;
-
-//	fontToJSON(dataIn, lenIn, &dataOut, &lenOut);
-	JSONtoFont(dataIn, lenIn, &dataOut, &lenOut);
+	struct blob *result = fontToJSON(dataIn, lenIn);
+//	struct blob *result = JSONtoFont(dataIn, lenIn);
 
 	FILE *outFile = fopen(outPath, "wb");
 	if(!outFile) {
 		fprintf(stderr, "Cannot write to file \"%s\". Exit.\n", outPath);
 		exit(EXIT_FAILURE);
 	}
-	fwrite(dataOut, sizeof(uint8_t), lenOut, outFile);
+	fwrite(result->data, sizeof(uint8_t), result->length, outFile);
 	fclose(outFile);
 
 	free(dataIn);
-	free(dataOut);
+	free_blob(result);
 
 	return 0;
 }
