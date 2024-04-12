@@ -138,7 +138,7 @@ otfcc_SplineFontContainer *readSFNTfromBuffer(uint8_t *buffer) {
 
 // This is a rewrite of otfccdump.c main()
 
-void fontToJSON(uint8_t *dataIn, uint8_t **dataOut, size_t *outLen)
+void fontToJSON(uint8_t *dataIn, size_t lenIn, uint8_t **dataOut, size_t *lenOut)
 {
 	uint32_t ttcindex = 0;
 
@@ -219,7 +219,7 @@ void fontToJSON(uint8_t *dataIn, uint8_t **dataOut, size_t *outLen)
 	}
 
 	*dataOut = (uint8_t *) buf;
-	*outLen = buflen;
+	*lenOut = buflen;
 
 	// Clean up
 
@@ -230,25 +230,18 @@ void fontToJSON(uint8_t *dataIn, uint8_t **dataOut, size_t *outLen)
 	otfcc_deleteOptions(options);
 }
 
-void JSONtoFont(char *inPath, char *outputPath)
+void JSONtoFont(uint8_t *dataIn, size_t lenIn,  uint8_t **dataOut, size_t *lenOut)
 {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "wasm");
 	otfcc_Options_optimizeTo(options, 1);
 
-	uint8_t *buffer;
-	size_t length;
-	loggedStep("Load from file %s", inPath) {
-		readEntireFile(inPath, &buffer, &length);
-	}
-
 	json_value *jsonRoot = NULL;
 	loggedStep("Parse into JSON") {
-		jsonRoot = json_parse((char *) buffer, length);
-		free(buffer);
+		jsonRoot = json_parse((char *) dataIn, lenIn);
 		if (!jsonRoot) {
-			logError("Cannot parse JSON file \"%s\". Exit.\n", inPath);
+			logError("Cannot parse JSON file. Exit.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -258,7 +251,7 @@ void JSONtoFont(char *inPath, char *outputPath)
 		otfcc_IFontBuilder *parser = otfcc_newJsonReader();
 		font = parser->read(jsonRoot, 0, options);
 		if (!font) {
-			logError("Cannot parse JSON file \"%s\" as a font. Exit.\n", inPath);
+			logError("Cannot parse JSON file as a font. Exit.\n");
 			exit(EXIT_FAILURE);
 		}
 		parser->free(parser);
@@ -270,15 +263,11 @@ void JSONtoFont(char *inPath, char *outputPath)
 	loggedStep("Build") {
 		otfcc_IFontSerializer *writer = otfcc_newOTFWriter();
 		caryll_Buffer *otf = (caryll_Buffer *)writer->serialize(font, options);
-		loggedStep("Write to file") {
-			FILE *outfile = u8fopen(outputPath, "wb");
-			if (!outfile) {
-				logError("Cannot write to file \"%s\". Exit.\n", outputPath);
-				exit(EXIT_FAILURE);
-			}
-			fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
-			fclose(outfile);
-		}
+
+		*lenOut = buflen(otf);
+		*dataOut = malloc(*lenOut);
+		memcpy(*dataOut, otf->data, *lenOut);
+
 		buffree(otf), writer->free(writer), otfcc_iFont.free(font);
 	}
 	otfcc_deleteOptions(options);
@@ -297,13 +286,17 @@ int main(int argc, char *argv[])
 
 	// Read the raw font file
 
-	uint8_t *dataIn;
-	size_t length;
-	readEntireFile(inPath, &dataIn, &length);
-	printf("Read %s: (%ld bytes)\n", inPath, length);
+	uint8_t *dataIn = NULL;
+	size_t lenIn = 0;
 
-	uint8_t *dataOut;
-	fontToJSON(dataIn, &dataOut, &length);
+	readEntireFile(inPath, &dataIn, &lenIn);
+	printf("Read %s: (%ld bytes)\n", inPath, lenIn);
+
+	uint8_t *dataOut = NULL;
+	size_t lenOut = 0;
+
+//	fontToJSON(dataIn, lenIn, &dataOut, &lenOut);
+	JSONtoFont(dataIn, lenIn, &dataOut, &lenOut);
 
 	FILE *outFile = fopen(outPath, "wb");
 	if(!outFile)
@@ -311,13 +304,14 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Cannot write to file \"%s\". Exit.\n", outPath);
 		exit(EXIT_FAILURE);
 	}
-	fwrite(dataOut, sizeof(uint8_t), length, outFile);
+	fwrite(dataOut, sizeof(uint8_t), lenOut, outFile);
 	fclose(outFile);
 
 
 //	JSONtoFont(argv[1], argv[2]);
 
 	free(dataIn);
+	free(dataOut);
 
 	return 0;
 }
