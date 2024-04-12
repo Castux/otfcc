@@ -195,6 +195,7 @@ project "wasm"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 
 	links { "libotfcc", "deps" }
+	includedirs{ "lib" }
 
 	files {
 		"src/**.c",
