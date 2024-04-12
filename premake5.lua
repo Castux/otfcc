@@ -48,15 +48,15 @@ end
 -- Premake 5 configurations
 workspace "otfcc"
 	configurations { "release", "debug" }
-	
+
 	platforms { "x64", "x86" }
 	filter "action:xcode4"
 		platforms { "x64" }
 	filter {}
-	
+
 	location "build"
 	includedirs { "include" }
-	
+
 	defines {
 		'_CARYLL_USE_PRE_SERIALIZED',
 		('MAIN_VER=' .. MAIN_VER),
@@ -68,7 +68,7 @@ workspace "otfcc"
 	filter "platforms:x64"
 		architecture "x64"
 	filter {}
-	
+
 	filter "action:vs2017"
 		location "build/vs"
 		toolset "v141_clang_c2"
@@ -92,7 +92,7 @@ workspace "otfcc"
 	filter "action:xcode4"
 		location "build/xcode"
 	filter {}
-	
+
 	filter "configurations:Debug"
 		defines { "DEBUG", "_DEBUG" }
 		symbols "on"
@@ -139,9 +139,9 @@ project "otfccdump"
 	language "C"
 	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
-	
+
 	links { "libotfcc", "deps" }
-	
+
 	files {
 		"src/**.c",
 		"src/**.h"
@@ -156,9 +156,9 @@ project "otfccbuild"
 	language "C"
 	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
-	
+
 	links { "libotfcc", "deps" }
-	
+
 	files {
 		"src/**.c",
 		"src/**.h"
@@ -183,4 +183,16 @@ project "otfccdll"
 	removefiles {
 		"src/otfccdump.c",
 		"src/otfccbuild.c"
+	}
+
+project "wasm"
+	kind "ConsoleApp"
+	language "C"
+	cbuildoptions()
+	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
+
+	links { "libotfcc", "deps" }
+
+	files {
+		"wasm/wasm.c"
 	}
