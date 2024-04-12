@@ -138,27 +138,17 @@ otfcc_SplineFontContainer *readSFNTfromBuffer(uint8_t *buffer) {
 
 // This is a rewrite of otfccdump.c main()
 
-void fontToJSON(char *inPath, char *outputPath)
+void fontToJSON(uint8_t *dataIn, uint8_t **dataOut, size_t *outLen)
 {
 	uint32_t ttcindex = 0;
 
 	bool show_pretty = true;
 	bool show_ugly = false;
-	bool add_bom = false;
 
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "wasm");
 	options->decimal_cmap = true;
-
-	// Read the raw font file
-
-	uint8_t *dataIn;
-	loggedStep("Load file") {
-		size_t length;
-		readEntireFile(inPath, &dataIn, &length);
-		printf("Read %s: (%ld bytes)\n", inPath, length);
-	}
 
 	// Parse the container
 
@@ -166,15 +156,14 @@ void fontToJSON(char *inPath, char *outputPath)
 	loggedStep("Read SFNT") {
 		sfnt = readSFNTfromBuffer(dataIn);
 		if (!sfnt || sfnt->count == 0) {
-			logError("Cannot read SFNT file \"%s\". Exit.\n", inPath);
+			logError("Cannot read SFNT file. Exit.\n");
 			exit(EXIT_FAILURE);
 		}
 		if (ttcindex >= sfnt->count) {
-			logError("Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex,
-					 inPath, (sfnt->count - 1));
+			logError("Subfont index %d out of range (0 -- %d). Exit.\n",
+				ttcindex, (sfnt->count - 1));
 			exit(EXIT_FAILURE);
 		}
-		free(dataIn);
 	}
 
 	// Build font structure
@@ -184,7 +173,7 @@ void fontToJSON(char *inPath, char *outputPath)
 		otfcc_IFontBuilder *reader = otfcc_newOTFReader();
 		font = reader->read(sfnt, ttcindex, options);
 		if (!font) {
-			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
+			logError("Font structure broken or corrupted. Exit.\n");
 			exit(EXIT_FAILURE);
 		}
 		reader->free(reader);
@@ -202,7 +191,7 @@ void fontToJSON(char *inPath, char *outputPath)
 		otfcc_IFontSerializer *dumper = otfcc_newJsonWriter();
 		root = (json_value *)dumper->serialize(font, options);
 		if (!root) {
-			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
+			logError("Font structure broken or corrupted. Exit.\n");
 			exit(EXIT_FAILURE);
 		}
 		dumper->free(dumper);
@@ -215,39 +204,82 @@ void fontToJSON(char *inPath, char *outputPath)
 		jsonOptions.mode = json_serialize_mode_packed;
 		jsonOptions.opts = 0;
 		jsonOptions.indent_size = 4;
-		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) {
+		if (show_pretty) {
 			jsonOptions.mode = json_serialize_mode_multiline;
 		}
 		if (show_ugly) jsonOptions.mode = json_serialize_mode_packed;
 		buflen = json_measure_ex(root, jsonOptions);
 		buf = calloc(1, buflen);
 		json_serialize_ex(buf, root, jsonOptions);
+
+		// Remove trailing 0's
+		while (!buf[buflen])
+			buflen -= 1;
+		buflen++;
 	}
 
-	loggedStep("Output") {
-		FILE *outputFile = u8fopen(outputPath, "wb");
-		if (!outputFile) {
-			logError("Cannot write to file \"%s\". Exit.", outputPath);
-			exit(EXIT_FAILURE);
-		}
-		if (add_bom) {
-			fputc(0xEF, outputFile);
-			fputc(0xBB, outputFile);
-			fputc(0xBF, outputFile);
-		}
-		size_t actualLen = buflen - 1;
-		while (!buf[actualLen])
-			actualLen -= 1;
-		fwrite(buf, sizeof(char), actualLen + 1, outputFile);
-		fclose(outputFile);
-	}
+	*dataOut = (uint8_t *) buf;
+	*outLen = buflen;
 
 	// Clean up
 
 	loggedStep("Finalize") {
-		free(buf);
 		if (font) otfcc_iFont.free(font);
 		if (root) json_builder_free(root);
+	}
+	otfcc_deleteOptions(options);
+}
+
+void JSONtoFont(char *inPath, char *outputPath)
+{
+	otfcc_Options *options = otfcc_newOptions();
+	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
+	options->logger->indent(options->logger, "wasm");
+	otfcc_Options_optimizeTo(options, 1);
+
+	uint8_t *buffer;
+	size_t length;
+	loggedStep("Load from file %s", inPath) {
+		readEntireFile(inPath, &buffer, &length);
+	}
+
+	json_value *jsonRoot = NULL;
+	loggedStep("Parse into JSON") {
+		jsonRoot = json_parse((char *) buffer, length);
+		free(buffer);
+		if (!jsonRoot) {
+			logError("Cannot parse JSON file \"%s\". Exit.\n", inPath);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	otfcc_Font *font;
+	loggedStep("Parse") {
+		otfcc_IFontBuilder *parser = otfcc_newJsonReader();
+		font = parser->read(jsonRoot, 0, options);
+		if (!font) {
+			logError("Cannot parse JSON file \"%s\" as a font. Exit.\n", inPath);
+			exit(EXIT_FAILURE);
+		}
+		parser->free(parser);
+		json_value_free(jsonRoot);
+	}
+	loggedStep("Consolidate") {
+		otfcc_iFont.consolidate(font, options);
+	}
+	loggedStep("Build") {
+		otfcc_IFontSerializer *writer = otfcc_newOTFWriter();
+		caryll_Buffer *otf = (caryll_Buffer *)writer->serialize(font, options);
+		loggedStep("Write to file") {
+			FILE *outfile = u8fopen(outputPath, "wb");
+			if (!outfile) {
+				logError("Cannot write to file \"%s\". Exit.\n", outputPath);
+				exit(EXIT_FAILURE);
+			}
+			fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
+			fclose(outfile);
+		}
+		buffree(otf), writer->free(writer), otfcc_iFont.free(font);
 	}
 	otfcc_deleteOptions(options);
 }
@@ -260,7 +292,32 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	fontToJSON(argv[1], argv[2]);
+	char *inPath = argv[1];
+	char *outPath = argv[2];
+
+	// Read the raw font file
+
+	uint8_t *dataIn;
+	size_t length;
+	readEntireFile(inPath, &dataIn, &length);
+	printf("Read %s: (%ld bytes)\n", inPath, length);
+
+	uint8_t *dataOut;
+	fontToJSON(dataIn, &dataOut, &length);
+
+	FILE *outFile = fopen(outPath, "wb");
+	if(!outFile)
+	{
+		fprintf(stderr, "Cannot write to file \"%s\". Exit.\n", outPath);
+		exit(EXIT_FAILURE);
+	}
+	fwrite(dataOut, sizeof(uint8_t), length, outFile);
+	fclose(outFile);
+
+
+//	JSONtoFont(argv[1], argv[2]);
+
+	free(dataIn);
 
 	return 0;
 }
