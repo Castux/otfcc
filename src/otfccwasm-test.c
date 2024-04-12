@@ -1,9 +1,10 @@
+#include <stdio.h>
 #include "otfccwasm.h"
 
 void readEntireFile(char *inPath, uint8_t **_buffer, size_t *_length) {
 	uint8_t *buffer = NULL;
 	size_t length = 0;
-	FILE *f = u8fopen(inPath, "rb");
+	FILE *f = fopen(inPath, "rb");
 	if (!f) {
 		fprintf(stderr, "Cannot read file \"%s\". Exit.\n", inPath);
 		exit(EXIT_FAILURE);
