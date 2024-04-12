@@ -148,7 +148,8 @@ project "otfccdump"
 	}
 	removefiles {
 		"src/otfccbuild.c",
-		"src/otfccdll.c"
+		"src/otfccdll.c",
+		"src/wasm.c",
 	}
 
 project "otfccbuild"
@@ -165,7 +166,8 @@ project "otfccbuild"
 	}
 	removefiles {
 		"src/otfccdump.c",
-		"src/otfccdll.c"
+		"src/otfccdll.c",
+		"src/wasm.c",
 	}
 
 project "otfccdll"
@@ -182,7 +184,8 @@ project "otfccdll"
 	}
 	removefiles {
 		"src/otfccdump.c",
-		"src/otfccbuild.c"
+		"src/otfccbuild.c",
+		"src/wasm.c",
 	}
 
 project "wasm"
@@ -194,5 +197,11 @@ project "wasm"
 	links { "libotfcc", "deps" }
 
 	files {
-		"wasm/wasm.c"
+		"src/**.c",
+		"src/**.h"
+	}
+	removefiles {
+		"src/otfccdump.c",
+		"src/otfccbuild.c",
+		"src/otfccdll.c",
 	}
