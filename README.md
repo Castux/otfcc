@@ -1,3 +1,29 @@
+# Notes for the WASM proof of concept
+
+- The original tool reads font files directly from disk and performs seeks on the file, which of course won't work in a web environment, so I ported the relevant functions to parse the font directly from memory, and marked them EMSCRIPTEN_KEEPALIVE to ensure they are exported to the WASM binary. See `src/otfccwasm.c`
+- A native `src/otfccwasm-test.c` program tests these functions by first loading the font entirely in memory and calling the parsing function on that chunk. It seems to work fine and the produced JSON is identical to that of the original binary (using the same options).
+- The WASM version compiles and exports the functions fine, but causes an out of bounds access error, despite testing with the exact same code and input. That's as far as I've managed to go :P Debugging WASM is tricky.
+
+Building and testing natively:
+
+```
+premake5 gmake
+make -C build/gmake config=debug_x64
+bin/debug-x64/wasm <path to font> out.json
+```
+
+Building and testing WASM version:
+
+```
+./build-wasm.sh
+cd wasm-poc
+python3 -m http.server
+```
+
+(or any other HTTP server of course). Then load file using the file selection input and check the console for error.
+
+-------------
+
 <p align="center"><img src="https://raw.githubusercontent.com/caryll/design/master/caryll-logo-libs-githubreadme.png" width=200></p><h1 align="center">otfcc</h1><p align="center"><a target="_blank" href="https://travis-ci.org/caryll/otfcc"><img src="https://travis-ci.org/caryll/otfcc.svg?branch=master" alt=""></a> <a target="_blank" href="https://ci.appveyor.com/project/be5invis/otfcc"><img src="https://ci.appveyor.com/api/projects/status/github/caryll/otfcc?branch=master&amp;svg=true" alt=""></a> <a href="https://github.com/caryll/otfcc/releases"><img src="https://img.shields.io/github/release/caryll/otfcc.svg" alt="Version"></a> <a target="_blank" href="https://gitter.im/caryll/otfcc"><img src="https://img.shields.io/gitter/room/caryll/otfcc.svg" alt=""></a></p>
 
 The `otfcc` is a C library and utility used for parsing and writing OpenType font files.
@@ -180,4 +206,3 @@ To build binaries in your terminal, run
 xcodebuild -workspace build/xcode/otfcc.xcworkspace -scheme otfccbuild -configuration Release
 xcodebuild -workspace build/xcode/otfcc.xcworkspace -scheme otfccdump -configuration Release
 ```
-
