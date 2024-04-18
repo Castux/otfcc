@@ -10,6 +10,8 @@ Building and testing natively:
 premake5 gmake
 make -C build/gmake config=debug_x64
 bin/debug-x64/wasm <path to font> out.json
+bin/debug-x64/otfccdump --pretty <path to font> -o out2.json
+diff out.json out2.json
 ```
 
 Building and testing WASM version:
