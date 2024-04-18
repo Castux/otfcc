@@ -36,14 +36,6 @@ void readPacketsFromBuffer(otfcc_SplineFontContainer *font, uint8_t *buffer) {
 		font->packets[count].entrySelector = parse_16u(&head);
 		font->packets[count].rangeShift = parse_16u(&head);
 
-		printf("readPacketsFromBuffer %d %d %d %d %d\n",
-			font->packets[count].sfnt_version,
-			font->packets[count].numTables,
-			font->packets[count].searchRange,
-			font->packets[count].entrySelector,
-			font->packets[count].rangeShift
-		);
-
 		NEW(font->packets[count].pieces, font->packets[count].numTables);
 
 		for (uint32_t i = 0; i < font->packets[count].numTables; i++) {

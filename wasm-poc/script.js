@@ -11,6 +11,9 @@ function run(input, mod)
 
 	var outArray = mod.HEAPU8.subarray(outData, outLength);
 	console.log(outArray);
+
+	mod._free_blob(blob);
+	mod._free(inData);
 }
 
 
