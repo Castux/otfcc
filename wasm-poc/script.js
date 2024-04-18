@@ -1,7 +1,7 @@
 function run(input, mod)
 {
 	var inData = mod._malloc(input.length);
-	console.log(input.length);
+	console.log("Got " + input.length + " bytes.");
 
 	mod.HEAPU8.set(input, inData);
 	var blob = mod._fontToJSON(inData, input.length);
@@ -35,3 +35,22 @@ function handleFile(input) {
 		console.log(reader.error);
 	};
 }
+
+function onLoad() {
+	console.log("Fetching font...");
+
+	var filePromise = fetch("Andale Mono.ttf").then((response) => {
+		return response.arrayBuffer();
+	});
+
+	var modPromise = Module();
+
+	Promise.all([filePromise, modPromise]).then((values) => {
+		var buffer = new Uint8Array(values[0]);
+		var mod = values[1];
+
+		run(buffer, mod);
+	});
+}
+
+onLoad();

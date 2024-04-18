@@ -22,7 +22,7 @@ cd wasm-poc
 python3 -m http.server
 ```
 
-(or any other HTTP server of course). Then load file using the file selection input and check the console for error.
+(or any other HTTP server of course). The page automatically loads a default font for test, and you can also use the file selection input. Check the console for error.
 
 -------------
 
