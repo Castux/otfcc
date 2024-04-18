@@ -96,9 +96,31 @@ otfcc_SplineFontContainer *readSFNTfromBuffer(uint8_t *buffer) {
 	return font;
 }
 
+struct blob *hexdump(uint8_t *dataIn, size_t lenIn) {
+
+	size_t dumpLen = lenIn * 3;
+	uint8_t *dump = malloc(dumpLen);
+
+	for(size_t i = 0 ; i < lenIn ; i++) {
+		size_t offset = i * 3;
+		char pad = (i % 16 == 15) ? '\n' : ' ';
+		sprintf((char *)dump + offset, "%02x%c", dataIn[i], pad);
+	}
+
+	struct blob *result = malloc(sizeof(struct blob));
+	result->data = dump;
+	result->length = dumpLen;
+
+	return result;
+}
+
 // This is a rewrite of otfccdump.c main()
 
 struct blob* EMSCRIPTEN_KEEPALIVE fontToJSON(uint8_t *dataIn, size_t lenIn) {
+
+	// Use this to test that the file is properly uploaded via JS
+	// return hexdump(dataIn, lenIn);
+
 	uint32_t ttcindex = 0;
 
 	bool show_pretty = true;

@@ -9,11 +9,12 @@ function run(input, mod)
 	var outData = mod._blob_data(blob);
 	var outLength = mod._blob_length(blob);
 
-	var outArray = mod.HEAPU8.subarray(outData, outLength);
-	console.log(outArray);
+	var outArray = mod.HEAPU8.subarray(outData, outData + outLength);
+	var blob = new Blob([outArray], {type : "application/octet-stream"})
+	saveAs(blob, "out-web.json")
 
-	mod._free_blob(blob);
-	mod._free(inData);
+//	mod._free_blob(blob);
+//	mod._free(inData);
 }
 
 

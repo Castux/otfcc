@@ -1330,8 +1330,8 @@ var wasmImports = {
 };
 var wasmExports = createWasm();
 var ___wasm_call_ctors = createExportWrapper('__wasm_call_ctors');
-var _fontToJSON = Module['_fontToJSON'] = createExportWrapper('fontToJSON');
 var _malloc = Module['_malloc'] = createExportWrapper('malloc');
+var _fontToJSON = Module['_fontToJSON'] = createExportWrapper('fontToJSON');
 var _JSONtoFont = Module['_JSONtoFont'] = createExportWrapper('JSONtoFont');
 var _blob_data = Module['_blob_data'] = createExportWrapper('blob_data');
 var _blob_length = Module['_blob_length'] = createExportWrapper('blob_length');
