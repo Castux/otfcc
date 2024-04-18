@@ -17,12 +17,13 @@ diff out.json out2.json
 Building and testing WASM version:
 
 ```
+brew install emscripten (or whichever package manager you use)
 ./build-wasm.sh
 cd wasm-poc
-python3 -m http.server
+python3 -m http.server (or any other HTTP server)
 ```
 
-(or any other HTTP server of course). The page automatically loads a default font for test, and you can also use the file selection input. Check the console for error.
+The page automatically loads a default font for test, and you can also use the file selection input. Check the console for error.
 
 -------------
 
